@@ -3,6 +3,10 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# System files
+.DS_Store
+Thumbs.db
+
 # C extensions
 *.so
 
@@ -54,6 +58,11 @@ cover/
 # Translations
 *.mo
 *.pot
+
+# Databases
+*.db
+*.db-wal
+*.db-shm
 
 # Django stuff:
 *.log
