@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление пользователями</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-active { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
+        .status-inactive { background-color: #6c757d; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">ЛФК Админ</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Справочник</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/users">Пользователи</a></li>
+                </ul>
+                <a href="/logout" class="btn btn-outline-light btn-sm">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0">Список пользователей бота</h4>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Пользователь (TG)</th>
+                            <th>Статус сессии</th>
+                            <th>Детали сессии</th>
+                            <th class="text-end">Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                            {# Связываем по колонке user_id, которая есть в обеих таблицах #}
+                            {% set current_uid = u['user_id']|string %}
+                            {% set session = active_map.get(current_uid) %}
+
+                            <tr>
+                                <td><code>{{ u['id'] }}</code></td> <td>
+                                    <strong>{{ u['username'] or 'Пользователь' }}</strong><br>
+                                    <small class="text-muted">Telegram ID: {{ u['user_id'] }}</small>
+                                </td>
+                                <td>
+                                    {% if session %}
+                                        <span class="badge bg-success">Активна</span>
+                                    {% else %}
+                                        <span class="text-muted">Неактивна</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if session %}
+                                        <small>Начало: {{ session['started_at'] }}</small>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if session %}
+                                        {# Оставляем session['id'], так как это уникальный номер самой записи в таблице сессий для UPDATE #}
+                                        <a href="{{ url_for('terminate_session', session_id=session['id']) }}" 
+                                           class="btn btn-danger btn-sm">Остановить</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

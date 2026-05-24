@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ЛФК Бот: Справочник упражнений</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">ЛФК Платформа</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('index') }}">Справочник</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('users') }}">Пользователи</a></li>
+                </ul>
+                <span class="navbar-text me-3">Привет, {{ session['username'] }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Выход</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5 mb-5">
+        
+        <h1 class="mb-4 text-center text-success">Справочник упражнений ЛФК</h1>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-success">
+                        <tr>
+                            <th style="width: 5%;" class="ps-3">ID</th>
+                            <th style="width: 20%;">Название</th>
+                            <th style="width: 35%;">Описание</th>
+                            <th style="width: 15%;">Группа мышц</th>
+                            <th style="width: 10%;">Медиа</th>
+                            <th style="width: 15%;" class="text-center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in exercises %}
+                            {% if edit_id and item.id == edit_id %}
+                                <tr class="table-warning">
+                                    <form method="POST" action="{{ url_for('edit', item_id=item.id) }}">
+                                        <input type="hidden" name="page" value="{{ page }}">
+                                        <td class="ps-3">{{ item.id }}</td>
+                                        <td><input type="text" class="form-control form-control-sm" name="title" value="{{ item.title }}" required></td>
+                                        <td><textarea class="form-control form-control-sm" name="description" rows="2">{{ item.description }}</textarea></td>
+                                        <td><input type="text" class="form-control form-control-sm" name="muscle_group" value="{{ item.muscle_group }}"></td>
+                                        <td><input type="url" class="form-control form-control-sm" name="media_url" value="{{ item.media_url }}" placeholder="http://..."></td>
+                                        <td class="text-center">
+                                            <div class="d-grid gap-2">
+                                                <button type="submit" class="btn btn-success btn-sm">Сохранить</button>
+                                                <a href="{{ url_for('index', page=page) }}" class="btn btn-secondary btn-sm">Отмена</a>
+                                            </div>
+                                        </td>
+                                    </form>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td class="ps-3">{{ item.id }}</td>
+                                    <td><strong>{{ item.title }}</strong></td>
+                                    <td>{{ item.description }}</td>
+                                    <td><span class="badge bg-secondary">{{ item.muscle_group }}</span></td>
+                                    <td>
+                                        {% if item.media_url %}
+                                            <a href="{{ item.media_url }}" target="_blank" class="btn btn-outline-info btn-sm">Смотреть</a>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('index', page=page, edit=item.id) }}" class="btn btn-outline-primary btn-sm">Изменить</a>
+                                            <a href="{{ url_for('delete', item_id=item.id, page=page) }}" 
+                                               onclick="return confirm('Точно удалить упражнение «{{ item.title }}»?')" 
+                                               class="btn btn-outline-danger btn-sm">Удалить</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+
+                        <tr class="table-light">
+                            <form method="POST" action="{{ url_for('add') }}">
+                                <td class="ps-3 fw-bold text-success">+</td>
+                                <td><input type="text" class="form-control form-control-sm" name="title" placeholder="Новое упражнение" required></td>
+                                <td><textarea class="form-control form-control-sm" name="description" placeholder="Подробное описание" rows="2"></textarea></td>
+                                <td><input type="text" class="form-control form-control-sm" name="muscle_group" placeholder="Напр. Спина"></td>
+                                <td><input type="url" class="form-control form-control-sm" name="media_url" placeholder="Ссылка на GIF"></td>
+                                <td class="text-center">
+                                    <button type="submit" class="btn btn-success btn-sm w-100">Добавить</button>
+                                </td>
+                            </form>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <nav aria-label="Навигация по страницам" class="mt-4">
+            <ul class="pagination justify-content-center">
+                
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{% if page > 1 %}{{ url_for('index', page=page-1) }}{% else %}#{% endif %}">&laquo; Назад</a>
+                </li>
+
+                {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('index', page=p) }}">{{ p }}</a>
+                    </li>
+                {% endfor %}
+
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{% if page < total_pages %}{{ url_for('index', page=page+1) }}{% else %}#{% endif %}">Вперед &raquo;</a>
+                </li>
+            </ul>
+        </nav>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</body>
+</html>
