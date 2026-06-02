@@ -5,7 +5,7 @@ import sqlite3
 import math
 from app.db import get_connection
 from app import app
-from config import Config
+from config import settings
 
 # Декоратор для защиты роутов, требующих авторизации
 def login_required(f):
@@ -22,7 +22,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        with get_connection(Config.DB_AUTH) as conn:
+        with get_connection(settings.DB_URL) as conn:
             user = conn.execute('SELECT * FROM admins WHERE username = ?', (username,)).fetchone()
             
         if user and check_password_hash(user['password_hash'], password):
@@ -46,15 +46,15 @@ def index():
     page = request.args.get('page', 1, type=int)
     edit_id = request.args.get('edit', type=int)
 
-    with get_connection(Config.DB_EXERCISES) as conn:
+    with get_connection(settings.DB_URL) as conn:
         total = conn.execute('SELECT COUNT(*) FROM exercises').fetchone()[0]
-        total_pages = max(1, math.ceil(total / Config.ITEMS_PER_PAGE))
+        total_pages = max(1, math.ceil(total / settings.ITEMS_PER_PAGE))
         page = max(1, min(page, total_pages))
 
-        offset = (page - 1) * Config.ITEMS_PER_PAGE
+        offset = (page - 1) * settings.ITEMS_PER_PAGE
         exercises = conn.execute(
             'SELECT * FROM exercises ORDER BY id LIMIT ? OFFSET ?',
-            (Config.ITEMS_PER_PAGE, offset)
+            (settings.ITEMS_PER_PAGE, offset)
         ).fetchall()
 
     return render_template(
@@ -73,14 +73,14 @@ def add():
     muscle_group = request.form['muscle_group']
     media_url = request.form['media_url']
     
-    with get_connection(Config.DB_EXERCISES) as conn:
+    with get_connection(settings.DB_URL) as conn:
         conn.execute(
             'INSERT INTO exercises (title, description, muscle_group, media_url) VALUES (?, ?, ?, ?)',
             (title, description, muscle_group, media_url)
         )
         total = conn.execute('SELECT COUNT(*) FROM exercises').fetchone()[0]
     
-    last_page = max(1, math.ceil(total / Config.ITEMS_PER_PAGE))
+    last_page = max(1, math.ceil(total / settings.ITEMS_PER_PAGE))
     return redirect(url_for('index', page=last_page))
 
 @app.route('/edit/<int:item_id>', methods=['POST'])
@@ -91,7 +91,7 @@ def edit(item_id):
     muscle_group = request.form['muscle_group']
     media_url = request.form['media_url']
     
-    with get_connection(Config.DB_EXERCISES) as conn:
+    with get_connection(settings.DB_URL) as conn:
         conn.execute(
             'UPDATE exercises SET title = ?, description = ?, muscle_group = ?, media_url = ? WHERE id = ?',
             (title, description, muscle_group, media_url, item_id)
@@ -100,17 +100,17 @@ def edit(item_id):
             'SELECT COUNT(*) FROM exercises WHERE id < ?', (item_id,)
         ).fetchone()[0]
         
-    page = max(1, (position // Config.ITEMS_PER_PAGE) + 1)
+    page = max(1, (position // settings.ITEMS_PER_PAGE) + 1)
     return redirect(url_for('index', page=page))
 
 @app.route('/delete/<int:item_id>')
 @login_required
 def delete(item_id):
-    with get_connection(Config.DB_EXERCISES) as conn:
+    with get_connection(settings.DB_URL) as conn:
         conn.execute('DELETE FROM exercises WHERE id = ?', (item_id,))
         total = conn.execute('SELECT COUNT(*) FROM exercises').fetchone()[0]
         
-    total_pages = max(1, math.ceil(total / Config.ITEMS_PER_PAGE))
+    total_pages = max(1, math.ceil(total / settings.ITEMS_PER_PAGE))
     page = request.args.get('page', 1, type=int)
     page = min(page, total_pages)
     return redirect(url_for('index', page=page))
@@ -119,7 +119,7 @@ def delete(item_id):
 @login_required
 def users():
     try:
-        with get_connection(Config.DB_BOT) as conn:
+        with get_connection(settings.DB_URL) as conn:
             # 1. Забираем всех пользователей из таблицы users
             all_users = conn.execute('SELECT * FROM users').fetchall()
 
@@ -143,7 +143,7 @@ def users():
 @app.route('/terminate_session/<int:session_id>')
 @login_required
 def terminate_session(session_id):
-    with get_connection(Config.DB_BOT) as conn:
+    with get_connection(settings.DB_URL) as conn:
         conn.execute('''
             UPDATE sessions 
             SET is_active = 0, ended_at = CURRENT_TIMESTAMP 

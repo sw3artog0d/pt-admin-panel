@@ -1,13 +1,14 @@
-import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY')
+class Settings(BaseSettings):
+    SECRET_KEY: str
+    ADMIN_USERNAME: str
+    ADMIN_PASSWORD: str
     
-    # EXTERNAL DATABASE
-    DB_BOT = './instance/bot_new.db'
+    DB_URL: str = 'sqlite:///./instance/database.db'
 
-    # LOCAL DATABASE
-    DB_EXERCISES = './instance/database.db'
-    DB_AUTH = './instance/auth.db'
+    ITEMS_PER_PAGE: int = 10
 
-    ITEMS_PER_PAGE = 10
+    model_config = SettingsConfigDict(env_file=".env")
+
+settings = Settings()

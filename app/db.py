@@ -1,13 +1,15 @@
 import sqlite3
 from werkzeug.security import generate_password_hash
-from config import Config
+from config import settings
 import os
 
 def init_db():
-    """if os.path.exists(Config.DB_EXERCISES):
-        return  # не пересоздаём, если уже есть"""
+    db_path = settings.DB_URL.replace('sqlite:///', '')
 
-    with get_connection(Config.DB_EXERCISES) as conn:
+    if os.path.exists(db_path):
+        return  # не пересоздаём, если уже есть
+
+    with get_connection(settings.DB_URL) as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS exercises (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +38,7 @@ def init_db():
             )"""
 
     #Таблица АДМИНОВ
-    with get_connection(Config.DB_AUTH) as conn:
+    with get_connection(settings.DB_URL) as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS admins (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,8 +47,8 @@ def init_db():
             )
         ''')
 
-        admin_user = os.environ.get("ADMIN_USERNAME")
-        admin_pass = os.environ.get("ADMIN_PASSWORD")
+        admin_user = settings.ADMIN_USERNAME
+        admin_pass = settings.ADMIN_PASSWORD
         if not admin_user or not admin_pass:
             print("Ошибка: ADMIN_USERNAME или ADMIN_PASSWORD не заданы в переменных окружения.")
         else:
@@ -64,7 +66,8 @@ def init_db():
                 except Exception as e:
                     print(f"Ошибка при создании админа: {e}")
 
-def get_connection(db_name):
-    conn = sqlite3.connect(db_name)
+def get_connection(db_url):
+    clean_path = db_url.replace('sqlite:///', '') 
+    conn = sqlite3.connect(clean_path)
     conn.row_factory = sqlite3.Row
     return conn

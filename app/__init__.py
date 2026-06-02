@@ -1,11 +1,7 @@
-from dotenv import load_dotenv
-
-load_dotenv() 
-
 from flask import Flask
-from config import Config
+from config import settings
 
 app = Flask(__name__)
-app.config.from_object(Config)
+app.secret_key = settings.SECRET_KEY
 
 from app import routes
