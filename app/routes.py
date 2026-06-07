@@ -3,7 +3,7 @@ from werkzeug.security import check_password_hash
 from functools import wraps
 import sqlite3
 import math
-from app.db import get_connection
+from app.dao import get_connection
 from app import app
 from config import settings
 
