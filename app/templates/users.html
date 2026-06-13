@@ -54,13 +54,13 @@
                     <tbody>
                         {% for u in users %}
                             {# Связываем по колонке user_id, которая есть в обеих таблицах #}
-                            {% set current_uid = u['user_id']|string %}
+                            {% set current_uid = u.user_id|string %}
                             {% set session = active_map.get(current_uid) %}
 
                             <tr>
-                                <td><code>{{ u['id'] }}</code></td> <td>
-                                    <strong>{{ u['username'] or 'Пользователь' }}</strong><br>
-                                    <small class="text-muted">Telegram ID: {{ u['user_id'] }}</small>
+                                <td><code>{{ u.id }}</code></td> <td>
+                                    <strong>{{ u.username or 'Пользователь' }}</strong><br>
+                                    <small class="text-muted">Telegram ID: {{ u.user_id }}</small>
                                 </td>
                                 <td>
                                     {% if session %}
@@ -71,15 +71,15 @@
                                 </td>
                                 <td>
                                     {% if session %}
-                                        <small>Начало: {{ session['started_at'] }}</small>
+                                        <small>Начало: {{ session.started_at }}</small>
                                     {% else %}
                                         —
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
                                     {% if session %}
-                                        {# Оставляем session['id'], так как это уникальный номер самой записи в таблице сессий для UPDATE #}
-                                        <a href="{{ url_for('terminate_session', session_id=session['id']) }}" 
+                                        {# Оставляем session.id, так как это уникальный номер самой записи в таблице сессий для UPDATE #}
+                                        <a href="{{ url_for('terminate_session', session_id=session.id) }}" 
                                            class="btn btn-danger btn-sm">Остановить</a>
                                     {% endif %}
                                 </td>

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, text, Integer, String
-from typing import Optional, Annotated
-import enum, datetime
+from sqlalchemy import ForeignKey, text, String
+from typing import Annotated
+import datetime
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
 timestamp = Annotated[datetime.datetime, mapped_column(server_default=text("(CURRENT_TIMESTAMP)"))]
