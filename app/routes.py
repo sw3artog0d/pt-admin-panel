@@ -8,7 +8,7 @@ from app.dao import (
     add_exercise,
     update_exercise,
     delete_exercise,
-    get_users_with_active_sessions,
+    get_users_sessions,
     deactivate_session,
 )
 
@@ -97,16 +97,13 @@ def delete(item_id):
 @app.route('/users')
 @login_required
 def users():
-     # Инициализируем пустыми значениями на случай ошибки
-    all_users = [] 
-    active_map = {}
     try:
-        all_users, active_map = get_users_with_active_sessions()
+        users_data = get_users_sessions()
     except Exception as e:
         flash(f'Ошибка структуры БД: {e}', 'danger')
-        all_users, active_map = [], {}
+        users_data = []
 
-    return render_template('users.html', users=all_users, active_map=active_map)
+    return render_template('users.html', users=users_data)
 
 
 @app.route('/terminate_session/<int:session_id>')

@@ -52,34 +52,35 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for u in users %}
-                            {# Связываем по колонке user_id, которая есть в обеих таблицах #}
-                            {% set current_uid = u.user_id|string %}
-                            {% set session = active_map.get(current_uid) %}
-
+                        {% for u, last_session_time in users %}
+                            {% set active_session = u.sessions | selectattr("is_active", "equalto", True) | first%}
                             <tr>
                                 <td><code>{{ u.id }}</code></td> <td>
-                                    <strong>{{ u.username or 'Пользователь' }}</strong><br>
+                                    <strong>{{ u.username }}</strong><br>
                                     <small class="text-muted">Telegram ID: {{ u.user_id }}</small>
                                 </td>
                                 <td>
-                                    {% if session %}
+                                    {% if active_session %}
                                         <span class="badge bg-success">Активна</span>
+                                    {% elif last_session_time %}
+                                        <span class="text-muted">Завершена</span>
                                     {% else %}
-                                        <span class="text-muted">Неактивна</span>
+                                        <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if session %}
-                                        <small>Начало: {{ session.started_at }}</small>
+                                    {% if active_session %}
+                                        <small>Начало: {{ active_session.started_at }}</small>
+                                    {% elif last_session_time %}
+                                        <small>Конец: {{ last_session_time }}</small>
                                     {% else %}
-                                        —
+                                        <small class="text-muted">Сессий не было</small>
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
-                                    {% if session %}
+                                    {% if active_session %}
                                         {# Оставляем session.id, так как это уникальный номер самой записи в таблице сессий для UPDATE #}
-                                        <a href="{{ url_for('terminate_session', session_id=session.id) }}" 
+                                        <a href="{{ url_for('terminate_session', session_id=active_session.id) }}" 
                                            class="btn btn-danger btn-sm">Остановить</a>
                                     {% endif %}
                                 </td>

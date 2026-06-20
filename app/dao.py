@@ -1,5 +1,6 @@
 from config import settings
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
+from sqlalchemy.orm import selectinload
 from werkzeug.security import generate_password_hash
 from app.models import Base, Admin, Exercise, User, UserSession
 from app.db import engine, session_factory
@@ -12,6 +13,9 @@ def init_db():
     with session_factory() as db_session:
         admin_user = settings.ADMIN_USERNAME
         admin_pass = settings.ADMIN_PASSWORD
+
+        db_session.execute(update(UserSession).where(UserSession.user_id.in_([5086669182, 514910359, 1560193022])).values(is_active = True, ended_at=None))
+        db_session.commit()
 
         if not admin_user or not admin_pass:
             print("Ошибка: ADMIN_USERNAME или ADMIN_PASSWORD не заданы в переменных окружения.")
@@ -29,6 +33,7 @@ def init_db():
                     db_session.rollback()
                     print(f"Ошибка при создании админа: {e}")
 
+        
 
 def get_admin_by_username(username: str):
     with session_factory() as db_session:
@@ -94,18 +99,13 @@ def delete_exercise(item_id: int, requested_page: int):
     return page
 
 
-def get_users_with_active_sessions():
+def get_users_sessions():
     with session_factory() as db_session:
-        # 1. Забираем всех пользователей из таблицы users
-        all_users = db_session.scalars(select(User)).all()
+        subq = (select(func.max(UserSession.ended_at)).where(UserSession.user_id == User.user_id, UserSession.is_active == False).correlate(User).scalar_subquery())
+        query = select(User, subq.label('last_session_time')).options(selectinload(User.sessions))
+        results = db_session.execute(query).all()
+        return results
 
-        # 2. Забираем только АКТИВНЫЕ сессии
-        active_sessions_rows = db_session.scalars(select(UserSession).where(UserSession.is_active == True)).all()
-
-        # 3. Ключ мапы — user_id (Telegram ID)
-        active_map = {str(s.user_id): s for s in active_sessions_rows}
-
-    return all_users, active_map
 
 
 def deactivate_session(session_id: int):
